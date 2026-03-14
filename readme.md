@@ -1,13 +1,17 @@
-# TrustEdge Backend - Product Review Platform API
+# Travel Buddy & Meetup Platform — Backend API
 
 <div align="center">
 
-![Node.js](https://img.shields.io/badge/Node.js-22.x-green)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
-![Express](https://img.shields.io/badge/Express-5.1-lightgrey)
-![MongoDB](https://img.shields.io/badge/MongoDB-6.18-green)
+![Node.js](https://img.shields.io/badge/Node.js-22.x-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
+![Express](https://img.shields.io/badge/Express-5.1-000000?logo=express&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-6.18-47A248?logo=mongodb&logoColor=white)
+![Mongoose](https://img.shields.io/badge/Mongoose-8.14-880000)
+![JWT](https://img.shields.io/badge/JWT-Auth-orange?logo=jsonwebtokens)
 
-**Production-ready REST API for standalone product reviews with voting, nested comments, and admin moderation.**
+**A production-ready REST API that connects travelers, helps them find compatible companions, and transforms solo journeys into shared adventures.**
+
+[Features](#features) • [Tech Stack](#tech-stack) • [Quick Start](#quick-start) • [API Reference](#api-reference) • [Database Models](#database-models)
 
 </div>
 
@@ -15,194 +19,536 @@
 
 ## Overview
 
-Modern REST API featuring a standalone review system where users can post reviews for any product by title. Includes authentication, voting system, nested comments, and full admin moderation workflow.
+Travel Buddy & Meetup Platform is a social-travel backend that enables users to discover travel companions heading to similar destinations. This subscription-based platform combines social networking and travel planning — users can create detailed travel profiles, post upcoming trip plans, search for matching travelers, request to join trips, and leave post-trip reviews.
 
-**Features:** JWT Auth • Role-Based Access • Standalone Reviews • Voting System • Nested Comments • Admin Moderation • Advanced Search • Premium Content
+---
+
+## Features
+
+| Category                 | Features                                                                                                                                |
+| :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication**       | Register/Login with Email & Password, JWT (Access + Refresh tokens), Social Login (Google, GitHub), Secure HTTP-only cookies            |
+| **User Profiles**        | Full name, Profile image, Bio, Travel interests, Visited countries, Current location, Verified badge                                    |
+| **Travel Plans**         | Create/Read/Update/Delete trips with destination, dates, budget range, travel type (Solo/Family/Friends/Couple), description, itinerary |
+| **Search & Matching**    | Search by destination, date range overlap, and travel type. Interest-based traveler matching                                            |
+| **Join Requests**        | "Request to Join" a travel plan. Plan owner can approve or reject requests                                                              |
+| **Reviews & Ratings**    | Post-trip user-to-user reviews (1-5 stars). Average rating calculation. Edit/Delete own reviews                                         |
+| **Subscription Payment** | Monthly (499 BDT) / Yearly (4999 BDT) plans via SSLCommerz. Verified badge on successful subscription                                   |
+| **Admin Dashboard**      | Manage users, travel plans, payment analytics. Role-based access control                                                                |
 
 ---
 
 ## Tech Stack
 
-**Core:** Node.js v22, TypeScript v5.8, Express v5.1, MongoDB v6.18, Mongoose v8.14  
-**Auth:** JWT (Access + Refresh Tokens), bcrypt, cookie-parser  
-**Validation:** Zod v3.24  
-**Payment:** SSLCommerz Integration
+| Layer               | Technology                                |
+| :------------------ | :---------------------------------------- |
+| **Runtime**         | Node.js v22                               |
+| **Language**        | TypeScript v5.8                           |
+| **Framework**       | Express.js v5.1                           |
+| **Database**        | MongoDB v6.18 + Mongoose v8.14            |
+| **Authentication**  | JWT (jsonwebtoken), bcrypt, cookie-parser |
+| **Validation**      | Zod v3.24                                 |
+| **Payment Gateway** | SSLCommerz (sslcommerz-lts)               |
+| **Deployment**      | Vercel                                    |
 
 ---
 
 ## Quick Start
 
+### Prerequisites
+
+- Node.js v18+ installed
+- MongoDB Atlas cluster or local MongoDB instance
+- SSLCommerz sandbox credentials (for payment testing)
+
+### Installation
+
 ```bash
-# Clone & Install
-git clone https://github.com/kader009/TrustEdge-backend.git
-cd TrustEdge-backend
+# 1. Clone the repository
+git clone https://github.com/kader009/travel-buddy-backend.git
+cd travel-buddy-backend
+
+# 2. Install dependencies
 npm install
 
-# Configure
+# 3. Configure environment variables
 cp .env.example .env
-# Edit .env with your settings (DATABASE_URI, JWT_ACCESS_SECRET, etc.)
+# Edit .env with your actual values (see Environment Variables below)
 
-# Run
-npm run dev          # Development
-npm run build        # Production build
-npm run start:prod   # Production server
+# 4. Run in development mode
+npm run dev
+
+# 5. Build for production
+npm run build
+
+# 6. Run production server
+npm run start:prod
+```
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following:
+
+```env
+NODE_ENV=development
+PORT=5000
+DATABASE_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/travel-buddy
+
+BCRYPT_SALT_ROUNDS=12
+
+JWT_ACCESS_SECRET=your_jwt_access_secret_here
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_here
+
+STORE_ID=your_sslcommerz_store_id
+STORE_PASSWORD=your_sslcommerz_store_password
+IS_LIVE=false
+
+CLIENT_BASE_URL=http://localhost:3000
+BACKEND_BASE_URL=http://localhost:5000/api/v1
+```
+
+### Available Scripts
+
+| Script      | Command              | Description                                    |
+| :---------- | :------------------- | :--------------------------------------------- |
+| Development | `npm run dev`        | Start dev server with hot-reload (ts-node-dev) |
+| Build       | `npm run build`      | Compile TypeScript to JavaScript               |
+| Production  | `npm run start:prod` | Start production server from `dist/`           |
+| Lint        | `npm run lint`       | Run ESLint on source files                     |
+| Lint Fix    | `npm run lint:fix`   | Auto-fix linting issues                        |
+
+---
+
+## Project Structure
+
+```
+travel-buddy-backend/
+├── src/
+│   ├── app/
+│   │   ├── config/
+│   │   │   └── index.ts              # Environment config
+│   │   ├── middlewares/
+│   │   │   ├── auth.middleware.ts     # JWT auth & role guard
+│   │   │   └── validateRequest.ts    # Zod validation middleware
+│   │   └── modules/
+│   │       ├── auth/                  # Register, Login, Refresh, Social Login
+│   │       │   ├── auth.interface.ts
+│   │       │   ├── auth.controller.ts
+│   │       │   ├── auth.service.ts
+│   │       │   ├── auth.route.ts
+│   │       │   └── auth.validation.ts
+│   │       ├── user/                  # Profile management
+│   │       │   ├── user.interface.ts
+│   │       │   ├── user.model.ts
+│   │       │   ├── user.controller.ts
+│   │       │   ├── user.service.ts
+│   │       │   ├── user.route.ts
+│   │       │   └── user.validation.ts
+│   │       ├── travelPlans/           # Trip CRUD + Search & Match
+│   │       │   ├── travelPlan.interface.ts
+│   │       │   ├── travelPlan.model.ts
+│   │       │   ├── travelPlan.controller.ts
+│   │       │   ├── travelPlan.service.ts
+│   │       │   ├── travelPlan.route.ts
+│   │       │   └── travelPlan.validation.ts
+│   │       ├── reviews/               # User-to-user post-trip reviews
+│   │       │   ├── review.interface.ts
+│   │       │   ├── review.model.ts
+│   │       │   ├── review.controller.ts
+│   │       │   ├── review.service.ts
+│   │       │   ├── review.route.ts
+│   │       │   └── review.validation.ts
+│   │       ├── joinRequests/          # Request to Join travel plans
+│   │       │   ├── joinRequest.interface.ts
+│   │       │   ├── joinRequest.model.ts
+│   │       │   ├── joinRequest.controller.ts
+│   │       │   ├── joinRequest.service.ts
+│   │       │   ├── joinRequest.route.ts
+│   │       │   └── joinRequest.validation.ts
+│   │       ├── payment/               # SSLCommerz subscription payments
+│   │       │   ├── payment.interface.ts
+│   │       │   ├── payment.model.ts
+│   │       │   ├── payment.controller.ts
+│   │       │   ├── payment.service.ts
+│   │       │   └── payment.route.ts
+│   │       └── health/                # Health check endpoint
+│   │           └── health.route.ts
+│   ├── types/
+│   │   ├── express.d.ts              # Express type augmentation
+│   │   └── sslcommerz-lts.d.ts       # SSLCommerz type declaration
+│   ├── utils/
+│   │   ├── tokenUtils.ts             # JWT token generation & verification
+│   │   ├── sendErrorResponse.ts      # Standardized error responses
+│   │   └── dbConnect.ts              # Database connection helper
+│   ├── app.ts                         # Express app setup & route registration
+│   └── server.ts                      # Server bootstrap & graceful shutdown
+├── .env.example
+├── package.json
+├── tsconfig.json
+├── vercel.json
+└── eslint.config.mjs
 ```
 
 ---
 
-## API Endpoints
+## API Reference
 
 **Base URL:** `https://your-domain.com/api/v1`
 
-### Authentication
+### Authentication (`/auth`)
 
-```
-POST   /auth/register         # Register new user
-POST   /auth/login            # Login and get tokens
-POST   /auth/refresh-token    # Refresh access token
-POST   /auth/logout           # Clear cookies/session
-```
+| Method | Endpoint             | Auth | Description                                     |
+| :----- | :------------------- | :--- | :---------------------------------------------- |
+| `POST` | `/auth/register`     | No   | Register a new user (default role: `user`)      |
+| `POST` | `/auth/login`        | No   | Login with email & password                     |
+| `POST` | `/auth/logout`       | No   | Clear auth cookies                              |
+| `POST` | `/auth/refresh`      | No   | Refresh access token using refresh token cookie |
+| `POST` | `/auth/social-login` | No   | Login/Register via Google or GitHub             |
 
-### Users
+**Register Request Body:**
 
-```
-GET    /users/me              # Get current user profile
-PUT    /users/update-profile  # Update name/image/bio
-PATCH  /users/update-password # Change existing password
-```
-
-### Category Management
-
-```
-# Public
-GET    /category                      # List all active categories
-
-# Admin (Requires Admin Auth)
-POST   /category/create-category      # Add new category
-GET    /category/admin/all-categories # Admin list (inc. hidden)
-GET    /category/:id                  # Get single category
-PUT    /category/:id                  # Update category
-DELETE /category/:id                  # Delete category
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123",
+  "image": "https://example.com/avatar.jpg",
+  "role": "user"
+}
 ```
 
-### Standalone Reviews
+**Login Request Body:**
 
-Reviews are independent and identified by `title` and `category`.
-
-```
-# Public
-GET    /review                # Get all published reviews
-GET    /review/:id            # Get single review details
-GET    /review/search         # Search & filter reviews
-GET    /review/premium        # Get all premium reviews
-GET    /review/preview/:id    # Preview for premium content
-
-# User (Requires Auth)
-POST   /review                # Create a new review
-PATCH  /review/:id            # Update own review
-DELETE /review/:id            # Delete own review
-
-# Admin (Requires Admin Auth)
-GET    /review/admin/pending        # List pending reviews
-PATCH  /review/admin/approve/:id    # Publish a review
-PATCH  /review/admin/unpublish/:id  # Unpublish with reason
-GET    /review/admin/status/:status # Filter by any status
+```json
+{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
 ```
 
-### Comments & Replies
+---
+
+### Users (`/users`)
+
+| Method   | Endpoint                       | Auth       | Description                            |
+| :------- | :----------------------------- | :--------- | :------------------------------------- |
+| `GET`    | `/users/profile/:id`           | No         | View any user's public profile         |
+| `GET`    | `/users/me`                    | User/Admin | Get current user's full profile        |
+| `PUT`    | `/users/update-profile`        | User/Admin | Update own profile                     |
+| `PATCH`  | `/users/update-password`       | User/Admin | Change password                        |
+| `GET`    | `/users/admin/all-users`       | Admin      | Get all users                          |
+| `GET`    | `/users/admin/:id`             | Admin      | Get single user details                |
+| `PUT`    | `/users/admin/update-user/:id` | Admin      | Admin update user (role, status, etc.) |
+| `DELETE` | `/users/delete-user/:id`       | Admin      | Soft-delete a user                     |
+
+**Update Profile Request Body:**
+
+```json
+{
+  "name": "John Doe",
+  "image": "https://example.com/new-avatar.jpg",
+  "bio": "Passionate traveler exploring the world one city at a time!",
+  "travelInterests": ["hiking", "food tours", "photography", "scuba diving"],
+  "visitedCountries": ["Thailand", "Japan", "Turkey", "Nepal"],
+  "currentLocation": "Dhaka, Bangladesh"
+}
+```
+
+---
+
+### Travel Plans (`/travel-plans`)
+
+| Method   | Endpoint                      | Auth       | Description                                             |
+| :------- | :---------------------------- | :--------- | :------------------------------------------------------ |
+| `GET`    | `/travel-plans`               | No         | Get all travel plans (paginated, filterable)            |
+| `GET`    | `/travel-plans/match`         | No         | **Search & match** travelers by destination, date, type |
+| `GET`    | `/travel-plans/:id`           | No         | Get single travel plan details                          |
+| `POST`   | `/travel-plans`               | User/Admin | Create a new travel plan                                |
+| `GET`    | `/travel-plans/user/my-plans` | User/Admin | Get current user's plans                                |
+| `PUT`    | `/travel-plans/:id`           | User/Admin | Update own travel plan                                  |
+| `DELETE` | `/travel-plans/:id`           | User/Admin | Soft-delete own travel plan                             |
+| `GET`    | `/travel-plans/admin/all`     | Admin      | Get all plans (admin view)                              |
+| `DELETE` | `/travel-plans/admin/:id`     | Admin      | Admin delete any plan                                   |
+
+**Create Travel Plan Body:**
+
+```json
+{
+  "destination": "Cox's Bazar, Bangladesh",
+  "startDate": "2026-04-15",
+  "endDate": "2026-04-22",
+  "budget": {
+    "min": 5000,
+    "max": 15000
+  },
+  "travelType": "Friends",
+  "description": "A week-long beach trip to Cox's Bazar. Looking for fun travel buddies who enjoy beach volleyball and seafood!",
+  "itinerary": "Day 1: Arrival & check-in. Day 2-3: Beach activities. Day 4: Himchari visit. Day 5: Inani Beach. Day 6-7: Free day & departure."
+}
+```
+
+**Search & Match Query Parameters:**
 
 ```
-POST   /comments                      # Post a new comment/reply
-GET    /comments/review/:reviewId     # Get comments for a review
-GET    /comments/:id                  # Get single comment
-GET    /comments/replies/:commentId   # Get replies to a comment
-PUT    /comments/:id                  # Update own comment
-DELETE /comments/:id                  # Soft delete comment
-DELETE /comments/hard-delete/:id      # Permanent removal (Admin)
-GET    /comments/user/my-comments     # Get current user's comments
+GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=2026-04-30&travelType=Friends&page=1&limit=10
 ```
 
-### Voting System
+| Parameter     | Type              | Description                              |
+| :------------ | :---------------- | :--------------------------------------- |
+| `destination` | string            | Partial match (case-insensitive)         |
+| `startDate`   | string (ISO date) | Filter plans overlapping this start date |
+| `endDate`     | string (ISO date) | Filter plans overlapping this end date   |
+| `travelType`  | enum              | `Solo`, `Family`, `Friends`, or `Couple` |
+| `page`        | number            | Page number (default: 1)                 |
+| `limit`       | number            | Results per page (default: 10)           |
 
+---
+
+### Join Requests (`/join-requests`)
+
+| Method  | Endpoint                      | Auth       | Description                           |
+| :------ | :---------------------------- | :--------- | :------------------------------------ |
+| `POST`  | `/join-requests`              | User/Admin | Request to join a travel plan         |
+| `GET`   | `/join-requests/my-requests`  | User/Admin | Get my sent join requests             |
+| `GET`   | `/join-requests/plan/:planId` | User/Admin | Get requests for my plan (owner only) |
+| `PATCH` | `/join-requests/:id/approve`  | User/Admin | Approve a join request (owner only)   |
+| `PATCH` | `/join-requests/:id/reject`   | User/Admin | Reject a join request (owner only)    |
+
+**Create Join Request Body:**
+
+```json
+{
+  "travelPlan": "665f1a2b3c4d5e6f7a8b9c0d",
+  "message": "Hey! I'm also heading to Cox's Bazar around the same time. Would love to join your group!"
+}
 ```
-POST   /votes/upvote/:reviewId        # Upvote a review
-POST   /votes/downvote/:reviewId      # Downvote a review
-DELETE /votes/remove/:reviewId        # Remove user's vote
-GET    /votes/counts/:reviewId        # Get vote counts (Up/Down)
-GET    /votes/my-vote/:reviewId       # Get user's current vote
+
+**Business Rules:**
+
+- Cannot request to join your own travel plan
+- Can only join plans with `upcoming` status
+- One request per user per travel plan
+- Only the plan owner can approve/reject requests
+
+---
+
+### Reviews & Ratings (`/reviews`)
+
+| Method   | Endpoint                | Auth       | Description                                      |
+| :------- | :---------------------- | :--------- | :----------------------------------------------- |
+| `GET`    | `/reviews/user/:userId` | No         | Get all reviews for a user (with average rating) |
+| `GET`    | `/reviews/:id`          | No         | Get single review details                        |
+| `POST`   | `/reviews`              | User/Admin | Create a post-trip review                        |
+| `PUT`    | `/reviews/:id`          | User/Admin | Update own review                                |
+| `DELETE` | `/reviews/:id`          | User/Admin | Delete own review (admin can delete any)         |
+
+**Create Review Body:**
+
+```json
+{
+  "reviewee": "665f1a2b3c4d5e6f7a8b9c0d",
+  "travelPlan": "665f2b3c4d5e6f7a8b9c0d1e",
+  "rating": 5,
+  "comment": "Amazing travel companion! Very organized, friendly, and made the entire trip so much more enjoyable. Highly recommend traveling with them!"
+}
 ```
 
-### Payment System (SSLCommerz)
+**Business Rules:**
 
+- Reviews can only be created after the trip status is `completed`
+- Cannot review yourself
+- One review per user per travel plan
+- Response includes `averageRating` across all reviews for that user
+
+---
+
+### Payment / Subscription (`/payment`)
+
+| Method | Endpoint             | Auth       | Description                     |
+| :----- | :------------------- | :--------- | :------------------------------ |
+| `POST` | `/payment/init`      | User/Admin | Initialize subscription payment |
+| `GET`  | `/payment/history`   | User/Admin | Get payment history             |
+| `GET`  | `/payment/analytics` | Admin      | Get earnings & plan breakdown   |
+| `POST` | `/payment/success`   | Webhook    | SSLCommerz success callback     |
+| `POST` | `/payment/fail`      | Webhook    | SSLCommerz failure callback     |
+| `POST` | `/payment/cancel`    | Webhook    | SSLCommerz cancel callback      |
+
+**Initialize Payment Body:**
+
+```json
+{
+  "planType": "monthly"
+}
 ```
-# User (Requires Auth)
-POST   /payment/init                  # Initialize payment for premium review
-GET    /payment/history               # Get user's payment history
 
-# Admin (Requires Admin Auth)
-GET    /payment/analytics             # Get earnings and popular reviews
+**Subscription Plans:**
 
-# Webhooks/Callbacks (Public)
-POST   /payment/success               # SSLCommerz success callback
-POST   /payment/fail                  # SSLCommerz failure callback
-POST   /payment/cancel                # SSLCommerz cancel callback
-```
+| Plan    | Price     | Duration |
+| :------ | :-------- | :------- |
+| Monthly | 499 BDT   | 30 days  |
+| Yearly  | 4,999 BDT | 365 days |
+
+> On successful payment, the user receives a **Verified Badge** (`isVerified: true`).
+
+---
+
+### Health Check (`/health`)
+
+| Method | Endpoint  | Auth | Description          |
+| :----- | :-------- | :--- | :------------------- |
+| `GET`  | `/health` | No   | Server health status |
 
 ---
 
 ## Database Models
 
-**User:** name, email, password, role, image  
-**Review:** title, description, category, rating, status (pending/published/unpublished), images, isPremium, price  
-**Vote:** user, review, voteType (upvote/downvote)  
-**Comment:** text, user, review, parentComment (for replies)
-**Payment:** transactionId, user, review, amount, status (paid/failed/pending/cancelled)
+### User
+
+| Field              | Type     | Description                           |
+| :----------------- | :------- | :------------------------------------ |
+| `name`             | String   | Full name (min 5 chars)               |
+| `email`            | String   | Unique, valid email                   |
+| `password`         | String   | Hashed with bcrypt                    |
+| `image`            | String   | Profile image URL                     |
+| `bio`              | String   | About section (max 1000 chars)        |
+| `travelInterests`  | String[] | e.g., hiking, food tours, photography |
+| `visitedCountries` | String[] | Countries already visited             |
+| `currentLocation`  | String   | Current city/country                  |
+| `isVerified`       | Boolean  | Verified badge (via subscription)     |
+| `role`             | Enum     | `user` \| `admin`                     |
+| `status`           | Enum     | `active` \| `inactive` \| `banned`    |
+| `provider`         | Enum     | `local` \| `google` \| `github`       |
+| `isDeleted`        | Boolean  | Soft delete flag                      |
+
+### Travel Plan
+
+| Field         | Type             | Description                                           |
+| :------------ | :--------------- | :---------------------------------------------------- |
+| `user`        | ObjectId -> User | Plan creator                                          |
+| `destination` | String           | Country/city name                                     |
+| `startDate`   | Date             | Trip start date                                       |
+| `endDate`     | Date             | Trip end date                                         |
+| `budget.min`  | Number           | Minimum budget                                        |
+| `budget.max`  | Number           | Maximum budget                                        |
+| `travelType`  | Enum             | `Solo` \| `Family` \| `Friends` \| `Couple`           |
+| `description` | String           | Trip details (10-2000 chars)                          |
+| `itinerary`   | String           | Day-by-day plan (optional, max 5000 chars)            |
+| `status`      | Enum             | `upcoming` \| `ongoing` \| `completed` \| `cancelled` |
+| `isDeleted`   | Boolean          | Soft delete flag                                      |
+
+### Review
+
+| Field        | Type                   | Description                 |
+| :----------- | :--------------------- | :-------------------------- |
+| `reviewer`   | ObjectId -> User       | Who wrote the review        |
+| `reviewee`   | ObjectId -> User       | Who the review is about     |
+| `travelPlan` | ObjectId -> TravelPlan | Associated trip             |
+| `rating`     | Number                 | 1-5 stars                   |
+| `comment`    | String                 | Review text (10-2000 chars) |
+| `isDeleted`  | Boolean                | Soft delete flag            |
+
+### Join Request
+
+| Field        | Type                   | Description                           |
+| :----------- | :--------------------- | :------------------------------------ |
+| `travelPlan` | ObjectId -> TravelPlan | Plan to join                          |
+| `requester`  | ObjectId -> User       | User requesting to join               |
+| `status`     | Enum                   | `pending` \| `approved` \| `rejected` |
+| `message`    | String                 | Optional message (max 500 chars)      |
+
+### Payment
+
+| Field                | Type             | Description                                    |
+| :------------------- | :--------------- | :--------------------------------------------- |
+| `transactionId`      | String           | Unique transaction ID                          |
+| `user`               | ObjectId -> User | Subscriber                                     |
+| `planType`           | Enum             | `monthly` \| `yearly`                          |
+| `amount`             | Number           | Payment amount in BDT                          |
+| `currency`           | String           | Default: `BDT`                                 |
+| `status`             | Enum             | `pending` \| `paid` \| `failed` \| `cancelled` |
+| `paymentGatewayData` | Object           | Raw SSLCommerz response data                   |
 
 ---
 
-## Security Measures
+## Security
 
-1. **State-less Auth:** JWT based authentication with secure HTTP-only cookies.
-2. **Encrypted Data:** Password hashing using bcrypt.
-3. **RBAC:** Role-Based Access Control (User vs Admin).
-4. **Validation:** Strict request body and parameter validation using Zod.
-5. **Secure Queries:** Protected against NoSQL injection.
+| Feature               | Implementation                                                   |
+| :-------------------- | :--------------------------------------------------------------- |
+| **Authentication**    | JWT-based with Access Token (15 min) + Refresh Token (7 days)    |
+| **Token Storage**     | Secure HTTP-only cookies with `SameSite=None` and `Secure` flag  |
+| **Password Hashing**  | bcrypt with configurable salt rounds                             |
+| **Role-Based Access** | `authMiddleware(['user', 'admin'])` — guards routes by role      |
+| **Input Validation**  | Zod schemas validate body, query, and params on every request    |
+| **Soft Deletes**      | Data is never permanently removed; `isDeleted` flag is used      |
+| **Ownership Checks**  | Users can only modify their own resources (plans, reviews, etc.) |
 
 ---
 
-## Response Format
+## API Response Format
 
-**Success:**
+**Success Response:**
 
 ```json
 {
   "success": true,
-  "message": "Operation successful",
+  "message": "Travel plan created successfully",
   "data": { ... }
 }
 ```
 
-**Error:**
+**Paginated Response:**
+
+```json
+{
+  "success": true,
+  "data": [ ... ],
+  "meta": {
+    "total": 45,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 5
+  }
+}
+```
+
+**Error Response:**
 
 ```json
 {
   "success": false,
-  "message": "Error details here",
-  "errors": [{ "path": "field", "message": "Constraint failed" }]
+  "message": "Validation error",
+  "errors": [
+    { "path": "body.destination", "message": "Destination is required" }
+  ]
 }
+```
+
+---
+
+## Deployment
+
+The project is configured for **Vercel** deployment with `vercel.json`. The production build is served from the `dist/` directory.
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm run start:prod
 ```
 
 ---
 
 ## Author
 
-**Kader** • [GitHub](https://github.com/kader009) • [Repository](https://github.com/kader009/TrustEdge-backend)
+**Kader** • [GitHub](https://github.com/kader009)
 
 ---
 
 <div align="center">
 
-**Built with Node.js, TypeScript, Express, and MongoDB**  
+**Built with Node.js, TypeScript, Express, and MongoDB**
+
 Star this repo if you find it helpful!
 
 </div>
