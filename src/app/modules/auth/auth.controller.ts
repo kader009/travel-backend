@@ -12,7 +12,11 @@ export const authController = {
       res.status(201).json({
         success: true,
         message: 'User registered successfully!',
-        data: { user: result.user },
+        data: {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        },
       });
     } catch (error) {
       next(error);
