@@ -1,6 +1,12 @@
 import { JoinRequest } from './joinRequest.model';
 import { IJoinRequest } from './joinRequest.interface';
 import { TravelPlan } from '../travelPlans/travelPlan.model';
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../errors/AppError';
 
 export const joinRequestService = {
   // Create a join request
@@ -15,17 +21,21 @@ export const joinRequestService = {
     });
 
     if (!travelPlan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
 
     // Cannot request to join own plan
     if (travelPlan.user.toString() === requesterId) {
-      throw new Error('You cannot request to join your own travel plan');
+      throw new BadRequestError(
+        'You cannot request to join your own travel plan',
+      );
     }
 
     // Only allow joining upcoming plans
     if (travelPlan.status !== 'upcoming') {
-      throw new Error('You can only request to join upcoming travel plans');
+      throw new BadRequestError(
+        'You can only request to join upcoming travel plans',
+      );
     }
 
     // Check for existing request
@@ -35,7 +45,7 @@ export const joinRequestService = {
     });
 
     if (existingRequest) {
-      throw new Error(
+      throw new ConflictError(
         'You have already sent a request to join this travel plan',
       );
     }
@@ -69,11 +79,13 @@ export const joinRequestService = {
     });
 
     if (!travelPlan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
 
     if (travelPlan.user.toString() !== userId) {
-      throw new Error('You can only view requests for your own travel plans');
+      throw new ForbiddenError(
+        'You can only view requests for your own travel plans',
+      );
     }
 
     return await JoinRequest.find({ travelPlan: planId })
@@ -92,20 +104,20 @@ export const joinRequestService = {
     const joinRequest = await JoinRequest.findById(requestId);
 
     if (!joinRequest) {
-      throw new Error('Join request not found');
+      throw new NotFoundError('Join request not found');
     }
 
     // Verify the user owns the travel plan
     const travelPlan = await TravelPlan.findById(joinRequest.travelPlan);
 
     if (!travelPlan || travelPlan.user.toString() !== userId) {
-      throw new Error(
+      throw new ForbiddenError(
         'You can only approve requests for your own travel plans',
       );
     }
 
     if (joinRequest.status !== 'pending') {
-      throw new Error('This request has already been processed');
+      throw new BadRequestError('This request has already been processed');
     }
 
     joinRequest.status = 'approved';
@@ -122,18 +134,20 @@ export const joinRequestService = {
     const joinRequest = await JoinRequest.findById(requestId);
 
     if (!joinRequest) {
-      throw new Error('Join request not found');
+      throw new NotFoundError('Join request not found');
     }
 
     // Verify the user owns the travel plan
     const travelPlan = await TravelPlan.findById(joinRequest.travelPlan);
 
     if (!travelPlan || travelPlan.user.toString() !== userId) {
-      throw new Error('You can only reject requests for your own travel plans');
+      throw new ForbiddenError(
+        'You can only reject requests for your own travel plans',
+      );
     }
 
     if (joinRequest.status !== 'pending') {
-      throw new Error('This request has already been processed');
+      throw new BadRequestError('This request has already been processed');
     }
 
     joinRequest.status = 'rejected';

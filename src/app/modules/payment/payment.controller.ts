@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { PaymentService } from './payment.service';
-import { sendErrorResponse } from '../../../utils/sendErrorResponse';
+import { UnauthorizedError } from '../../errors/AppError';
 
-const initPayment = async (req: Request, res: Response) => {
+const initPayment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = req.user;
     if (!user) {
-      throw new Error('User not authenticated');
+      throw new UnauthorizedError('User not authenticated');
     }
     const { userId } = user;
     const { planType } = req.body;
@@ -19,11 +19,15 @@ const initPayment = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    sendErrorResponse(error, res);
+    next(error);
   }
 };
 
-const handleSuccess = async (req: Request, res: Response) => {
+const handleSuccess = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { transactionId } = req.query;
     const gatewayData = req.body;
@@ -39,7 +43,7 @@ const handleSuccess = async (req: Request, res: Response) => {
   }
 };
 
-const handleFail = async (req: Request, res: Response) => {
+const handleFail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { transactionId } = req.query;
     const redirectUrl = await PaymentService.handleFail(
@@ -51,7 +55,11 @@ const handleFail = async (req: Request, res: Response) => {
   }
 };
 
-const handleCancel = async (req: Request, res: Response) => {
+const handleCancel = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const { transactionId } = req.query;
     const redirectUrl = await PaymentService.handleCancel(
@@ -63,11 +71,15 @@ const handleCancel = async (req: Request, res: Response) => {
   }
 };
 
-const getPaymentHistory = async (req: Request, res: Response) => {
+const getPaymentHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const user = req.user;
     if (!user) {
-      throw new Error('User not authenticated');
+      throw new UnauthorizedError('User not authenticated');
     }
     const { userId } = user;
     const result = await PaymentService.getPaymentHistory(userId);
@@ -77,11 +89,15 @@ const getPaymentHistory = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    sendErrorResponse(error, res);
+    next(error);
   }
 };
 
-const getAdminAnalytics = async (req: Request, res: Response) => {
+const getAdminAnalytics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     const result = await PaymentService.getAdminAnalytics();
 
@@ -90,7 +106,7 @@ const getAdminAnalytics = async (req: Request, res: Response) => {
       data: result,
     });
   } catch (error) {
-    sendErrorResponse(error, res);
+    next(error);
   }
 };
 

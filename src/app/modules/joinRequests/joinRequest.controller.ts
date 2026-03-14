@@ -1,14 +1,13 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { joinRequestService } from './joinRequest.service';
-import { sendErrorResponse } from '../../../utils/sendErrorResponse';
 
 export const joinRequestController = {
-  async createJoinRequest(req: Request, res: Response): Promise<void> {
+  async createJoinRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const requesterId = req.user!.userId;
       const joinRequest = await joinRequestService.createJoinRequest(
         requesterId,
-        req.body,
+        req.body
       );
       res.status(201).json({
         success: true,
@@ -16,39 +15,39 @@ export const joinRequestController = {
         data: joinRequest,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getMyRequests(req: Request, res: Response): Promise<void> {
+  async getMyRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const requests = await joinRequestService.getMyRequests(userId);
       res.status(200).json({ success: true, data: requests });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getPlanRequests(req: Request, res: Response): Promise<void> {
+  async getPlanRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const requests = await joinRequestService.getPlanRequests(
         req.params.planId,
-        userId,
+        userId
       );
       res.status(200).json({ success: true, data: requests });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async approveRequest(req: Request, res: Response): Promise<void> {
+  async approveRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const joinRequest = await joinRequestService.approveRequest(
         req.params.id,
-        userId,
+        userId
       );
       res.status(200).json({
         success: true,
@@ -56,16 +55,16 @@ export const joinRequestController = {
         data: joinRequest,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async rejectRequest(req: Request, res: Response): Promise<void> {
+  async rejectRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const joinRequest = await joinRequestService.rejectRequest(
         req.params.id,
-        userId,
+        userId
       );
       res.status(200).json({
         success: true,
@@ -73,7 +72,7 @@ export const joinRequestController = {
         data: joinRequest,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 };

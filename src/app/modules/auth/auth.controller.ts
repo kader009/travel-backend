@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { authService } from './auth.service';
-import { sendErrorResponse } from '../../../utils/sendErrorResponse';
 
 export const authController = {
-  async register(req: Request, res: Response) {
+  async register(req: Request, res: Response, next: NextFunction) {
     try {
       const userData = req.body;
       const result = await authService.register(userData);
@@ -13,19 +12,17 @@ export const authController = {
       res.status(201).json({
         success: true,
         message: 'User registered successfully!',
-        data: { user: result.user }, // no need to send access token to frontend
+        data: { user: result.user },
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async login(req: Request, res: Response) {
+  async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { email, password } = req.body;
       const result = await authService.login(email, password);
-
-      // console.log("result", result);
 
       setAuthCookies(res, result);
 
@@ -38,13 +35,12 @@ export const authController = {
         },
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async logout(req: Request, res: Response) {
+  async logout(req: Request, res: Response, next: NextFunction) {
     try {
-      // Clear both access and refresh tokens
       res.clearCookie('accessToken', {
         httpOnly: true,
         sameSite: 'none',
@@ -62,11 +58,15 @@ export const authController = {
         .status(200)
         .json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async refreshToken(req: Request, res: Response): Promise<void> {
+  async refreshToken(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const refreshToken = req.cookies.refreshToken;
       if (!refreshToken) {
@@ -78,30 +78,27 @@ export const authController = {
 
       const result = await authService.refreshToken(refreshToken);
 
-      // Set new short-lived access token cookie
       res.cookie('accessToken', result.accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        maxAge: 15 * 60 * 1000,
       });
 
       res.status(200).json({ success: true, data: { user: result.user } });
     } catch (error) {
-      res
-        .status(401)
-        .json({ success: false, message: 'Refresh token invalid', error });
+      next(error);
     }
   },
 
-  async socialLogin(req: Request, res: Response) {
+  async socialLogin(req: Request, res: Response, next: NextFunction) {
     try {
       const { name, email, provider, image } = req.body;
       const result = await authService.socialLogin(
         name,
         email,
         provider,
-        image
+        image,
       );
 
       setAuthCookies(res, result);
@@ -116,16 +113,13 @@ export const authController = {
         },
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 };
 
 // Helper: set both refresh & access tokens on login/register
-
 const setAuthCookies = (res: Response, result: any) => {
-  const isProduction = process.env.NODE_ENV === 'production';
-
   // Refresh token
   res.cookie('refreshToken', result.refreshToken, {
     httpOnly: true,

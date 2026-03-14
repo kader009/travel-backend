@@ -1,9 +1,8 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { reviewService } from './review.service';
-import { sendErrorResponse } from '../../../utils/sendErrorResponse';
 
 export const reviewController = {
-  async createReview(req: Request, res: Response): Promise<void> {
+  async createReview(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const reviewerId = req.user!.userId;
       const review = await reviewService.createReview(reviewerId, req.body);
@@ -13,11 +12,11 @@ export const reviewController = {
         data: review,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getUserReviews(req: Request, res: Response): Promise<void> {
+  async getUserReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { userId } = req.params;
       const result = await reviewService.getUserReviews(userId);
@@ -27,26 +26,26 @@ export const reviewController = {
         averageRating: result.averageRating,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getReviewById(req: Request, res: Response): Promise<void> {
+  async getReviewById(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const review = await reviewService.getReviewById(req.params.id);
       res.status(200).json({ success: true, data: review });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async updateReview(req: Request, res: Response): Promise<void> {
+  async updateReview(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const review = await reviewService.updateReview(
         req.params.id,
         userId,
-        req.body,
+        req.body
       );
       res.status(200).json({
         success: true,
@@ -54,11 +53,11 @@ export const reviewController = {
         data: review,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async deleteReview(req: Request, res: Response): Promise<void> {
+  async deleteReview(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
@@ -68,7 +67,7 @@ export const reviewController = {
         message: 'Review deleted successfully',
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 };

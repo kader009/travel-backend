@@ -4,6 +4,7 @@ import config from '../../config';
 import { Payment } from './payment.model';
 import { User } from '../user/user.model';
 import { TSubscriptionPlan } from './payment.interface';
+import { BadRequestError, NotFoundError } from '../../errors/AppError';
 
 // Subscription pricing
 const SUBSCRIPTION_PRICES: Record<TSubscriptionPlan, number> = {
@@ -15,11 +16,11 @@ const initPayment = async (userId: string, planType: TSubscriptionPlan) => {
   const user = await User.findById(userId);
 
   if (!user) {
-    throw new Error('User not found');
+    throw new NotFoundError('User not found');
   }
 
   if (!SUBSCRIPTION_PRICES[planType]) {
-    throw new Error('Invalid subscription plan type');
+    throw new BadRequestError('Invalid subscription plan type');
   }
 
   const amount = SUBSCRIPTION_PRICES[planType];
@@ -76,7 +77,7 @@ const initPayment = async (userId: string, planType: TSubscriptionPlan) => {
 
     return apiResponse.GatewayPageURL;
   } else {
-    throw new Error('Failed to initialize payment with SSLCommerz');
+    throw new BadRequestError('Failed to initialize payment with SSLCommerz');
   }
 };
 
@@ -85,7 +86,7 @@ const handleSuccess = async (transactionId: string, gatewayData: any) => {
   const payment = await Payment.findOne({ transactionId });
 
   if (!payment) {
-    throw new Error('Payment record not found');
+    throw new NotFoundError('Payment record not found');
   }
 
   payment.status = 'paid';

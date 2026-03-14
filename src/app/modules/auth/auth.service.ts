@@ -3,17 +3,23 @@ import { User } from '../user/user.model';
 import { IAuthResponse } from './auth.interface';
 import { tokenUtils } from '../../../utils/tokenUtils';
 import { IUser } from '../user/user.interface';
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../errors/AppError';
 
 export const authService = {
   // Register user
   async register(userData: IUser): Promise<IAuthResponse> {
     const existingUser = await User.findOne({ email: userData.email });
     if (existingUser) {
-      throw new Error('Email already exists');
+      throw new ConflictError('Email already exists');
     }
 
     if (!userData.password) {
-      throw new Error('Password is required for registration');
+      throw new BadRequestError('Password is required for registration');
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
@@ -21,7 +27,7 @@ export const authService = {
 
     const { accessToken, refreshToken } = tokenUtils.generateTokens(
       user._id.toString(),
-      user.role
+      user.role,
     );
 
     return { accessToken, refreshToken, user };
@@ -31,37 +37,39 @@ export const authService = {
   async login(email: string, password: string): Promise<IAuthResponse> {
     const user = await User.findOne({ email, isDeleted: false });
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     if (!user.password) {
-      throw new Error('This account uses social login. Please login with your social provider.');
+      throw new BadRequestError(
+        'This account uses social login. Please login with your social provider.',
+      );
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const { accessToken, refreshToken } = tokenUtils.generateTokens(
       user._id.toString(),
-      user.role
+      user.role,
     );
     return { accessToken, refreshToken, user };
   },
 
   async refreshToken(
-    refreshToken: string
+    refreshToken: string,
   ): Promise<{ accessToken: string; user: IUser }> {
     const decoded = tokenUtils.verifyRefreshToken(refreshToken);
     const user = await User.findById(decoded.userId);
     if (!user || user.isDeleted) {
-      throw new Error('Invalid refresh token');
+      throw new UnauthorizedError('Invalid refresh token');
     }
 
     const accessToken = tokenUtils.generateAccessToken(
       user._id.toString(),
-      user.role
+      user.role,
     );
 
     return { accessToken, user };
@@ -71,7 +79,7 @@ export const authService = {
     name: string,
     email: string,
     provider: 'google' | 'github',
-    image?: string
+    image?: string,
   ): Promise<IAuthResponse> {
     // Check if user already exists
     let user = await User.findOne({ email, isDeleted: false });
@@ -80,7 +88,7 @@ export const authService = {
       // User exists, generate tokens and return
       const { accessToken, refreshToken } = tokenUtils.generateTokens(
         user._id.toString(),
-        user.role
+        user.role,
       );
       return { accessToken, refreshToken, user };
     }
@@ -96,7 +104,7 @@ export const authService = {
 
     const { accessToken, refreshToken } = tokenUtils.generateTokens(
       user._id.toString(),
-      user.role
+      user.role,
     );
 
     return { accessToken, refreshToken, user };

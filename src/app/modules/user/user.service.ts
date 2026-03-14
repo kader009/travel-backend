@@ -1,13 +1,18 @@
 import bcrypt from 'bcrypt';
 import { User } from './user.model';
 import { IUpdatePasswordInput, IUser } from './user.interface';
+import {
+  BadRequestError,
+  NotFoundError,
+  UnauthorizedError,
+} from '../../errors/AppError';
 
 export const userService = {
   async getProfile(userId: string): Promise<IUser> {
     const user = await User.findById(userId).select('-password');
 
     if (!user || user.isDeleted) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
     return user;
   },
@@ -19,7 +24,7 @@ export const userService = {
     }).select('-password -provider -isDeleted');
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
     return user;
   },
@@ -40,7 +45,7 @@ export const userService = {
     }).select('-password');
 
     if (!user || user.isDeleted) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
     return user;
   },
@@ -52,7 +57,7 @@ export const userService = {
   async getSingleUser(userId: string): Promise<IUser | null> {
     const user = await User.findById(userId).select('-password');
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
     return user;
   },
@@ -64,7 +69,7 @@ export const userService = {
     }).select('-password');
 
     if (!user || user.isDeleted) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     return user;
@@ -78,7 +83,7 @@ export const userService = {
     );
 
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     return user;
@@ -92,7 +97,7 @@ export const userService = {
   }: IUpdatePasswordInput): Promise<void> {
     const user = await User.findById(userId);
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundError('User not found');
     }
 
     // Check current password
@@ -101,7 +106,7 @@ export const userService = {
       user.password as string,
     );
     if (!isMatch) {
-      throw new Error('Current password is incorrect');
+      throw new UnauthorizedError('Current password is incorrect');
     }
 
     // Hash new password

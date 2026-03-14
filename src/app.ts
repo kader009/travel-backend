@@ -8,6 +8,7 @@ import { reviewRoutes } from './app/modules/reviews/review.route';
 import { joinRequestRoutes } from './app/modules/joinRequests/joinRequest.route';
 import { paymentRoutes } from './app/modules/payment/payment.route';
 import { healthRoutes } from './app/modules/health/health.route';
+import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
 
 const app: Application = express();
 
@@ -39,5 +40,8 @@ app.use('/api/v1/payment', paymentRoutes);
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to Travel Buddy & Meetup Backend!');
 });
+
+// Global Error Handler (must be after all routes)
+app.use(globalErrorHandler);
 
 export default app;

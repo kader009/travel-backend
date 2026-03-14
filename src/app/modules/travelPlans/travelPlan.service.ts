@@ -1,6 +1,11 @@
 import { TravelPlan } from './travelPlan.model';
 import { ITravelPlan } from './travelPlan.interface';
 import { User } from '../user/user.model';
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+} from '../../errors/AppError';
 
 export const travelPlanService = {
   // Create a new travel plan
@@ -68,7 +73,7 @@ export const travelPlanService = {
     );
 
     if (!plan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
     return plan;
   },
@@ -85,11 +90,13 @@ export const travelPlanService = {
     });
 
     if (!plan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
 
     if (plan.user.toString() !== userId) {
-      throw new Error('You are not authorized to update this travel plan');
+      throw new ForbiddenError(
+        'You are not authorized to update this travel plan',
+      );
     }
 
     const updatedPlan = await TravelPlan.findByIdAndUpdate(planId, updateData, {
@@ -98,7 +105,7 @@ export const travelPlanService = {
     });
 
     if (!updatedPlan) {
-      throw new Error('Failed to update travel plan');
+      throw new BadRequestError('Failed to update travel plan');
     }
 
     return updatedPlan;
@@ -112,11 +119,13 @@ export const travelPlanService = {
     });
 
     if (!plan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
 
     if (plan.user.toString() !== userId) {
-      throw new Error('You are not authorized to delete this travel plan');
+      throw new ForbiddenError(
+        'You are not authorized to delete this travel plan',
+      );
     }
 
     await TravelPlan.findByIdAndUpdate(planId, { isDeleted: true });
@@ -133,7 +142,7 @@ export const travelPlanService = {
   async adminDeleteTravelPlan(planId: string): Promise<void> {
     const plan = await TravelPlan.findById(planId);
     if (!plan) {
-      throw new Error('Travel plan not found');
+      throw new NotFoundError('Travel plan not found');
     }
     await TravelPlan.findByIdAndUpdate(planId, { isDeleted: true });
   },
@@ -193,19 +202,6 @@ export const travelPlanService = {
         .limit(limit),
       TravelPlan.countDocuments(filter),
     ]);
-
-    // If user has interests, also try to find interest-based matches
-    // This enriches the results with interest-matched travelers
-    if (plans.length > 0) {
-      const userIds = plans.map((p) => p.user);
-      const usersWithInterests = await User.find({
-        _id: { $in: userIds },
-        isDeleted: false,
-      }).select('travelInterests');
-
-      // Attach interest data for frontend matching display
-      // (already populated via the populate call above)
-    }
 
     return { plans, total, page, limit };
   },

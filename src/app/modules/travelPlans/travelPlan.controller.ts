@@ -1,9 +1,12 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { travelPlanService } from './travelPlan.service';
-import { sendErrorResponse } from '../../../utils/sendErrorResponse';
 
 export const travelPlanController = {
-  async createTravelPlan(req: Request, res: Response): Promise<void> {
+  async createTravelPlan(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       const plan = await travelPlanService.createTravelPlan(userId, req.body);
@@ -13,11 +16,15 @@ export const travelPlanController = {
         data: plan,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getAllTravelPlans(req: Request, res: Response): Promise<void> {
+  async getAllTravelPlans(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const result = await travelPlanService.getAllTravelPlans(
         req.query as {
@@ -38,30 +45,42 @@ export const travelPlanController = {
         },
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getMyTravelPlans(req: Request, res: Response): Promise<void> {
+  async getMyTravelPlans(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       const plans = await travelPlanService.getMyTravelPlans(userId);
       res.status(200).json({ success: true, data: plans });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async getTravelPlanById(req: Request, res: Response): Promise<void> {
+  async getTravelPlanById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const plan = await travelPlanService.getTravelPlanById(req.params.id);
       res.status(200).json({ success: true, data: plan });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async updateTravelPlan(req: Request, res: Response): Promise<void> {
+  async updateTravelPlan(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       const plan = await travelPlanService.updateTravelPlan(
@@ -75,11 +94,15 @@ export const travelPlanController = {
         data: plan,
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async deleteTravelPlan(req: Request, res: Response): Promise<void> {
+  async deleteTravelPlan(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       await travelPlanService.deleteTravelPlan(req.params.id, userId);
@@ -88,20 +111,28 @@ export const travelPlanController = {
         message: 'Travel plan deleted successfully',
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async adminGetAllTravelPlans(req: Request, res: Response): Promise<void> {
+  async adminGetAllTravelPlans(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const plans = await travelPlanService.adminGetAllTravelPlans();
       res.status(200).json({ success: true, data: plans });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async adminDeleteTravelPlan(req: Request, res: Response): Promise<void> {
+  async adminDeleteTravelPlan(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       await travelPlanService.adminDeleteTravelPlan(req.params.id);
       res.status(200).json({
@@ -109,11 +140,15 @@ export const travelPlanController = {
         message: 'Travel plan deleted by admin',
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 
-  async searchAndMatch(req: Request, res: Response): Promise<void> {
+  async searchAndMatch(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const result = await travelPlanService.searchAndMatch(
         req.query as {
@@ -136,7 +171,7 @@ export const travelPlanController = {
         },
       });
     } catch (error) {
-      sendErrorResponse(error, res);
+      next(error);
     }
   },
 };
