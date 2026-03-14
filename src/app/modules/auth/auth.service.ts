@@ -23,7 +23,12 @@ export const authService = {
     }
 
     const hashedPassword = await bcrypt.hash(userData.password, 10);
-    const user = await User.create({ ...userData, password: hashedPassword });
+    const createdUser = await User.create({
+      ...userData,
+      password: hashedPassword,
+    });
+    const user = createdUser.toObject();
+    delete user.password;
 
     const { accessToken, refreshToken } = tokenUtils.generateTokens(
       user._id.toString(),
@@ -35,7 +40,9 @@ export const authService = {
 
   // Login user
   async login(email: string, password: string): Promise<IAuthResponse> {
-    const user = await User.findOne({ email, isDeleted: false });
+    const user = await User.findOne({ email, isDeleted: false })
+      .select('+password')
+      .lean();
     if (!user) {
       throw new UnauthorizedError('Invalid credentials');
     }
@@ -55,7 +62,11 @@ export const authService = {
       user._id.toString(),
       user.role,
     );
-    return { accessToken, refreshToken, user };
+
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+
+    return { accessToken, refreshToken, user: userWithoutPassword as any };
   },
 
   async refreshToken(

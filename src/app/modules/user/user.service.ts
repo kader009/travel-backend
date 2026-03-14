@@ -1,11 +1,7 @@
 import bcrypt from 'bcrypt';
 import { User } from './user.model';
 import { IUpdatePasswordInput, IUser } from './user.interface';
-import {
-  BadRequestError,
-  NotFoundError,
-  UnauthorizedError,
-} from '../../errors/AppError';
+import { NotFoundError, UnauthorizedError } from '../../errors/AppError';
 
 export const userService = {
   async getProfile(userId: string): Promise<IUser> {
@@ -95,7 +91,7 @@ export const userService = {
     currentPassword,
     newPassword,
   }: IUpdatePasswordInput): Promise<void> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('+password');
     if (!user) {
       throw new NotFoundError('User not found');
     }
