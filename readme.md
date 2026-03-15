@@ -28,8 +28,8 @@ Travel Buddy & Meetup Platform is a social-travel backend that enables users to 
 | Category                 | Features                                                                                                                                |
 | :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
 | **Authentication**       | Register/Login with Email & Password, JWT (Access + Refresh tokens), Social Login (Google, GitHub), Secure HTTP-only cookies            |
-| **User Profiles**        | Full name, Profile image, Bio, Travel interests, Visited countries, Current location, Verified badge                                    |
-| **Travel Plans**         | Create/Read/Update/Delete trips with destination, dates, budget range, travel type (Solo/Family/Friends/Couple), description, itinerary |
+| **User Profiles**        | Full name, Profile image, Bio, Travel interests, Visited countries, Current location, Coordinates (Map), Verified badge |
+| **Travel Plans**         | Create/Read/Update/Delete trips with destination, dates, budget range, travel type, description, itinerary, coordinates, and images  |
 | **Search & Matching**    | Search by destination, date range overlap, and travel type. Interest-based traveler matching                                            |
 | **Join Requests**        | "Request to Join" a travel plan. Plan owner can approve or reject requests                                                              |
 | **Reviews & Ratings**    | Post-trip user-to-user reviews (1-5 stars). Average rating calculation. Edit/Delete own reviews                                         |
@@ -178,7 +178,11 @@ BACKEND_BASE_URL=http://localhost:5000/api/v1
   "bio": "Passionate traveler exploring the world one city at a time!",
   "travelInterests": ["hiking", "food tours", "photography", "scuba diving"],
   "visitedCountries": ["Thailand", "Japan", "Turkey", "Nepal"],
-  "currentLocation": "Dhaka, Bangladesh"
+  "currentLocation": "Dhaka, Bangladesh",
+  "coordinates": {
+    "lat": 23.8103,
+    "lng": 90.4125
+  }
 }
 ```
 
@@ -211,7 +215,15 @@ BACKEND_BASE_URL=http://localhost:5000/api/v1
   },
   "travelType": "Friends",
   "description": "A week-long beach trip to Cox's Bazar. Looking for fun travel buddies who enjoy beach volleyball and seafood!",
-  "itinerary": "Day 1: Arrival & check-in. Day 2-3: Beach activities. Day 4: Himchari visit. Day 5: Inani Beach. Day 6-7: Free day & departure."
+  "itinerary": "Day 1: Arrival & check-in...",
+  "coordinates": {
+    "lat": 21.4272,
+    "lng": 92.0058
+  },
+  "images": [
+    "https://example.com/beach1.jpg",
+    "https://example.com/beach2.jpg"
+  ]
 }
 ```
 
@@ -342,6 +354,7 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 | `travelInterests`  | String[] | e.g., hiking, food tours, photography |
 | `visitedCountries` | String[] | Countries already visited             |
 | `currentLocation`  | String   | Current city/country                  |
+| `coordinates`     | Object   | `{ lat: number, lng: number }` (Map)  |
 | `isVerified`       | Boolean  | Verified badge (via subscription)     |
 | `role`             | Enum     | `user` \| `admin`                     |
 | `status`           | Enum     | `active` \| `inactive` \| `banned`    |
@@ -361,6 +374,8 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 | `travelType`  | Enum             | `Solo` \| `Family` \| `Friends` \| `Couple`           |
 | `description` | String           | Trip details (10-2000 chars)                          |
 | `itinerary`   | String           | Day-by-day plan (optional, max 5000 chars)            |
+| `coordinates` | Object           | `{ lat: number, lng: number }` (Map)                  |
+| `images`      | String[]         | Array of trip image URLs                              |
 | `status`      | Enum             | `upcoming` \| `ongoing` \| `completed` \| `cancelled` |
 | `isDeleted`   | Boolean          | Soft delete flag                                      |
 

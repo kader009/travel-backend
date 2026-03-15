@@ -55,6 +55,14 @@ const travelPlanSchema = new Schema<ITravelPlan>(
       trim: true,
       maxlength: [5000, 'Itinerary cannot exceed 5000 characters'],
     },
+    coordinates: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
+    images: {
+      type: [String],
+      default: [],
+    },
     status: {
       type: String,
       enum: {

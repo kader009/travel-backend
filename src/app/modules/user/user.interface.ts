@@ -12,6 +12,10 @@ export interface IUser {
   travelInterests?: string[];
   visitedCountries?: string[];
   currentLocation?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
   isVerified?: boolean;
   role: TUserRole;
   status?: TUserStatus;

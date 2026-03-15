@@ -30,6 +30,12 @@ export const UserValidation = {
         .string()
         .max(200, 'Location cannot exceed 200 characters')
         .optional(),
+      coordinates: z
+        .object({
+          lat: z.number({ required_error: 'Latitude must be a number' }),
+          lng: z.number({ required_error: 'Longitude must be a number' }),
+        })
+        .optional(),
     }),
   }),
 

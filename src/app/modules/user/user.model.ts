@@ -41,6 +41,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       trim: true,
     },
+    coordinates: {
+      lat: { type: Number },
+      lng: { type: Number },
+    },
     isVerified: {
       type: Boolean,
       default: false,

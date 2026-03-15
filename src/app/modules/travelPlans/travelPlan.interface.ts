@@ -20,6 +20,11 @@ export interface ITravelPlan {
   travelType: TTravelType;
   description: string;
   itinerary?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  images?: string[];
   status: TTravelPlanStatus;
   isDeleted: boolean;
   createdAt?: Date;

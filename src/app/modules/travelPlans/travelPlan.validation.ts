@@ -32,6 +32,13 @@ export const TravelPlanValidation = {
         .string()
         .max(5000, 'Itinerary cannot exceed 5000 characters')
         .optional(),
+      coordinates: z
+        .object({
+          lat: z.number({ required_error: 'Latitude is required' }),
+          lng: z.number({ required_error: 'Longitude is required' }),
+        })
+        .optional(),
+      images: z.array(z.string().url('Invalid image URL')).optional(),
     }),
   }),
 
@@ -69,6 +76,13 @@ export const TravelPlanValidation = {
         .string()
         .max(5000, 'Itinerary cannot exceed 5000 characters')
         .optional(),
+      coordinates: z
+        .object({
+          lat: z.number({ required_error: 'Latitude must be a number' }),
+          lng: z.number({ required_error: 'Longitude must be a number' }),
+        })
+        .optional(),
+      images: z.array(z.string().url('Invalid image URL')).optional(),
       status: z
         .enum(['upcoming', 'ongoing', 'completed', 'cancelled'])
         .optional(),
