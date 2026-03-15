@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
 
-export type TTravelType = 'Solo' | 'Family' | 'Friends' | 'Couple';
+export type TTravelType = 'Solo' | 'Family' | 'Friends' | 'Couple' | 'Alone';
 export type TTravelPlanStatus =
   | 'upcoming'
   | 'ongoing'
