@@ -9,6 +9,7 @@ import { reviewRoutes } from './app/modules/reviews/review.route';
 import { joinRequestRoutes } from './app/modules/joinRequests/joinRequest.route';
 import { paymentRoutes } from './app/modules/payment/payment.route';
 import { healthRoutes } from './app/modules/health/health.route';
+import { chatRoutes } from './app/modules/chat/chat.route';
 import { globalErrorHandler } from './app/middlewares/globalErrorHandler';
 import {
   globalLimiter,
@@ -49,6 +50,7 @@ app.use('/api/v1/travel-plans', travelPlanRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/join-requests', joinRequestRoutes);
 app.use('/api/v1/payment', paymentLimiter, paymentRoutes);
+app.use('/api/v1/chat', chatRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Welcome to Travel Buddy & Meetup Backend!');

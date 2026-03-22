@@ -35,6 +35,7 @@ Travel Buddy & Meetup Platform is a social-travel backend that enables users to 
 | **Reviews & Ratings**    | Post-trip user-to-user reviews (1-5 stars). Average rating calculation. Edit/Delete own reviews                                         |
 | **Subscription Payment** | Monthly (499 BDT) / Yearly (4999 BDT) plans via SSLCommerz. Verified badge on successful subscription                                   |
 | **Admin Dashboard**      | Manage users, travel plans, payment analytics. Role-based access control                                                                |
+| **Real-time Chat**       | Private 1-to-1 messaging between authenticated users using Socket.io                                                                    |
 
 ---
 
@@ -45,6 +46,7 @@ Travel Buddy & Meetup Platform is a social-travel backend that enables users to 
 | **Runtime**         | Node.js v22                               |
 | **Language**        | TypeScript v5.8                           |
 | **Framework**       | Express.js v5.1                           |
+| **Real-time Comms** | Socket.io v4                              |
 | **Database**        | MongoDB v6.18 + Mongoose v8.14            |
 | **Authentication**  | JWT (jsonwebtoken), bcrypt, cookie-parser |
 | **Validation**      | Zod v3.24                                 |
@@ -332,6 +334,20 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 
 ---
 
+### Chat & Messaging (`/chat`)
+
+| Method | Endpoint                     | Auth       | Description                                      |
+| :----- | :--------------------------- | :--------- | :----------------------------------------------- |
+| `GET`  | `/chat/users`                | User/Admin | Get list of users the current user chatted with  |
+| `GET`  | `/chat/messages/:receiverId` | User/Admin | Get message history with a specific user         |
+
+**Business Rules:**
+
+- Chat history is only accessible between authenticated users.
+- Real-time messages must be sent strictly via Socket.io events.
+
+---
+
 ### Health Check (`/health`)
 
 | Method | Endpoint  | Auth | Description          |
@@ -410,6 +426,62 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 | `currency`           | String           | Default: `BDT`                                 |
 | `status`             | Enum             | `pending` \| `paid` \| `failed` \| `cancelled` |
 | `paymentGatewayData` | Object           | Raw SSLCommerz response data                   |
+
+### Message (Chat)
+
+| Field                | Type             | Description                                    |
+| :------------------- | :--------------- | :--------------------------------------------- |
+| `senderId`           | ObjectId -> User | Message sender                                 |
+| `receiverId`         | ObjectId -> User | Message receiver                               |
+| `content`            | String           | Message text body                              |
+| `isRead`             | Boolean          | Read status (Default: `false`)                 |
+
+---
+
+## Real-time Chat (Socket.io) Implementation
+
+The platform uses **Socket.io** for real-time 1-to-1 messaging. Connections are strictly guarded by JWT authentication to prevent unauthorized access.
+
+### Frontend Integration Example
+
+```typescript
+import { io } from "socket.io-client";
+
+// 1. Initialize Connection with JWT Token
+const socket = io("http://localhost:5000", {
+  auth: {
+    token: "your_jwt_access_token_here" // MUST provide access token
+  }
+});
+
+// 2. Connection Handlers
+socket.on("connect", () => {
+  console.log("Connected securely with Socket ID:", socket.id);
+});
+
+socket.on("connect_error", (err) => {
+  console.error("Authentication failed:", err.message);
+});
+
+// 3. Receive Messages (Listener)
+socket.on("receiveMessage", (message) => {
+  console.log("New incoming message:", message);
+  // message object: { _id, senderId, receiverId, content, createdAt }
+});
+
+// 4. Send a Message
+const sendMessage = (receiverId, content) => {
+  socket.emit("sendMessage", {
+    receiverId: receiverId, 
+    content: content
+  });
+};
+
+// 5. Confirmation when your message is saved & sent
+socket.on("messageSent", (message) => {
+  console.log("Message successfully delivered:", message);
+});
+```
 
 ---
 
