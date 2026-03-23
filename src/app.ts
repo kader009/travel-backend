@@ -30,8 +30,8 @@ app.use(
   cors({
     origin: [
       'http://localhost:3000',
-      'https://trustedge.vercel.app',
       'https://sandbox.sslcommerz.com',
+      'https://travel-frontend-liart.vercel.app',
     ],
     credentials: true,
   }),
