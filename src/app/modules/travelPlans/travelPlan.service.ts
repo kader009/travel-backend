@@ -7,6 +7,25 @@ import {
   NotFoundError,
 } from '../../errors/AppError';
 
+// Helper function to update travel plan status based on dates
+const updateTravelPlanStatus = async (plan: ITravelPlan): Promise<void> => {
+  const now = new Date();
+  let newStatus = plan.status;
+
+  if (plan.status !== 'cancelled' && plan.status !== 'completed') {
+    if (now > plan.endDate) {
+      newStatus = 'completed';
+    } else if (now >= plan.startDate && now <= plan.endDate) {
+      newStatus = 'ongoing';
+    }
+
+    // Update if status changed
+    if (newStatus !== plan.status) {
+      await TravelPlan.findByIdAndUpdate(plan._id, { status: newStatus });
+    }
+  }
+};
+
 export const travelPlanService = {
   // Create a new travel plan
   async createTravelPlan(
@@ -55,14 +74,25 @@ export const travelPlanService = {
       TravelPlan.countDocuments(filter),
     ]);
 
+    // Update status for each plan based on current date
+    await Promise.all(plans.map((plan) => updateTravelPlanStatus(plan)));
+
     return { plans, total, page, limit };
   },
 
   // Get current user's travel plans
   async getMyTravelPlans(userId: string): Promise<ITravelPlan[]> {
-    return await TravelPlan.find({ user: userId, isDeleted: false }).sort({
+    const plans = await TravelPlan.find({
+      user: userId,
+      isDeleted: false,
+    }).sort({
       createdAt: -1,
     });
+
+    // Update status for each plan based on current date
+    await Promise.all(plans.map((plan) => updateTravelPlanStatus(plan)));
+
+    return plans;
   },
 
   // Get single travel plan
@@ -78,7 +108,13 @@ export const travelPlanService = {
     if (!plan) {
       throw new NotFoundError('Travel plan not found');
     }
-    return plan;
+
+    // Update status based on current date
+    await updateTravelPlanStatus(plan);
+
+    // Fetch updated plan
+    const updatedPlan = await TravelPlan.findById(planId);
+    return updatedPlan!;
   },
 
   // Update travel plan (only the owner can update)
@@ -205,6 +241,9 @@ export const travelPlanService = {
         .limit(limit),
       TravelPlan.countDocuments(filter),
     ]);
+
+    // Update status for each plan based on current date
+    await Promise.all(plans.map((plan) => updateTravelPlanStatus(plan)));
 
     return { plans, total, page, limit };
   },
