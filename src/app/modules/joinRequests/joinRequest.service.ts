@@ -63,7 +63,10 @@ export const joinRequestService = {
   async getMyRequests(userId: string): Promise<IJoinRequest[]> {
     return await JoinRequest.find({ requester: userId })
       .populate('travelPlan', 'destination startDate endDate travelType status')
-      .populate('requester', 'name image')
+      .populate(
+        'requester',
+        'name image email bio travelInterests currentLocation isVerified',
+      )
       .sort({ createdAt: -1 });
   },
 

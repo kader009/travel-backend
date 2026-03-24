@@ -38,6 +38,58 @@ export const reviewController = {
     }
   },
 
+  async getUserReviewStats(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const { userId } = req.params;
+      const result = await reviewService.getUserReviewStats(userId);
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getAllUsersReviewStats(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const result = await reviewService.getAllUsersReviewStats();
+      res.status(200).json({
+        success: true,
+        total: result.length,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getLatestReviews(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const limit = parseInt(req.query.limit as string) || 6;
+      const result = await reviewService.getLatestReviews(limit);
+      res.status(200).json({
+        success: true,
+        total: result.length,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
   async getReviewsGivenByUser(
     req: Request,
     res: Response,

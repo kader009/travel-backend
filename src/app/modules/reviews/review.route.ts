@@ -42,10 +42,20 @@ router.delete(
 );
 
 // Public routes - AFTER protected routes
+router.get('/all-stats', reviewController.getAllUsersReviewStats);
+
+router.get('/latest', reviewController.getLatestReviews);
+
 router.get(
   '/user/:userId',
   validateRequest(ReviewValidation.getUserReviewsSchema),
   reviewController.getUserReviews,
+);
+
+router.get(
+  '/stats/:userId',
+  validateRequest(ReviewValidation.getUserReviewsSchema),
+  reviewController.getUserReviewStats,
 );
 
 router.get(

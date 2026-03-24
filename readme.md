@@ -273,15 +273,147 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 
 ### Reviews & Ratings (`/reviews`)
 
-| Method   | Endpoint                | Auth       | Description                                      |
-| :------- | :---------------------- | :--------- | :----------------------------------------------- |
-| `GET`    | `/reviews/user/:userId` | No         | Get all reviews for a user (with average rating) |
-| `GET`    | `/reviews/:id`          | No         | Get single review details                        |
-| `GET`    | `/reviews/given`        | User/Admin | Get all reviews created by me (for dashboard)    |
-| `GET`    | `/reviews/received`     | User/Admin | Get all reviews received by me (for dashboard)   |
-| `POST`   | `/reviews`              | User/Admin | Create a post-trip review                        |
-| `PUT`    | `/reviews/:id`          | User/Admin | Update own review                                |
-| `DELETE` | `/reviews/:id`          | User/Admin | Delete own review (admin can delete any)         |
+| Method   | Endpoint                 | Auth       | Description                                                |
+| :------- | :----------------------- | :--------- | :--------------------------------------------------------- |
+| `GET`    | `/reviews/all-stats`     | No         | Get all users with their review stats (for top-rated list) |
+| `GET`    | `/reviews/latest`        | No         | Get latest reviews for carousel (community voices)         |
+| `GET`    | `/reviews/user/:userId`  | No         | Get all reviews for a user (with average rating)           |
+| `GET`    | `/reviews/stats/:userId` | No         | Get user details with review statistics                    |
+| `GET`    | `/reviews/:id`           | No         | Get single review details                                  |
+| `GET`    | `/reviews/given`         | User/Admin | Get all reviews created by me (for dashboard)              |
+| `GET`    | `/reviews/received`      | User/Admin | Get all reviews received by me (for dashboard)             |
+| `POST`   | `/reviews`               | User/Admin | Create a post-trip review                                  |
+| `PUT`    | `/reviews/:id`           | User/Admin | Update own review                                          |
+| `DELETE` | `/reviews/:id`           | User/Admin | Delete own review (admin can delete any)                   |
+
+**Get All Users Review Stats (GET `/reviews/all-stats`) - For Top Rated Travelers:**
+
+```json
+{
+  "success": true,
+  "total": 7,
+  "data": [
+    {
+      "user": {
+        "_id": "69b67cb0ad7f3f3c1c779b3c",
+        "name": "Ahsan Habib",
+        "email": "habib@gmail.com",
+        "image": "https://example.com/ahsan.jpg",
+        "bio": "Adventure enthusiast",
+        "isVerified": false
+      },
+      "totalReviews": 2,
+      "averageRating": 5.0,
+      "ratingBreakdown": {
+        "five": 2,
+        "four": 0,
+        "three": 0,
+        "two": 0,
+        "one": 0
+      }
+    },
+    {
+      "user": {
+        "_id": "69bbdee49c9f48e87e41dfae",
+        "name": "Abdul Kader",
+        "email": "kader@gmail.com",
+        "image": "https://example.com/kader.jpg",
+        "bio": "I love to travel whole the world",
+        "isVerified": false
+      },
+      "totalReviews": 1,
+      "averageRating": 5.0,
+      "ratingBreakdown": {
+        "five": 1,
+        "four": 0,
+        "three": 0,
+        "two": 0,
+        "one": 0
+      }
+    }
+  ]
+}
+```
+
+**Get Single User Review Stats (GET `/reviews/stats/:userId`):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "_id": "69b67cb0ad7f3f3c1c779b3c",
+      "name": "Ahsan Habib",
+      "email": "habib@gmail.com",
+      "image": "https://example.com/ahsan.jpg",
+      "bio": "Adventure enthusiast",
+      "isVerified": false
+    },
+    "totalReviews": 2,
+    "averageRating": 5.0,
+    "ratingBreakdown": {
+      "five": 2,
+      "four": 0,
+      "three": 0,
+      "two": 0,
+      "one": 0
+    }
+  }
+}
+```
+
+**Get Latest Reviews for Carousel (GET `/reviews/latest?limit=6`):**
+
+```json
+{
+  "success": true,
+  "total": 6,
+  "data": [
+    {
+      "_id": "69c13ddea01dc30d73ed956a",
+      "reviewer": {
+        "_id": "69b67b7ead7f3f3c1c779b33",
+        "name": "John Doe",
+        "image": "https://example.com/john.jpg"
+      },
+      "reviewee": {
+        "_id": "69b67cb0ad7f3f3c1c779b3c",
+        "name": "Jane Smith"
+      },
+      "rating": 5,
+      "comment": "Architecture trips are best when shared. I met three fellow enthusiasts through the community, and we did a marvelous tour of Kyoto's temples together. Life-long memories made.",
+      "travelPlan": {
+        "destination": "Kyoto, Japan"
+      },
+      "createdAt": "2026-03-23T13:19:26.862Z"
+    },
+    {
+      "_id": "69c13ddea01dc30d73ed956b",
+      "reviewer": {
+        "_id": "69b67b7ead7f3f3c1c779b34",
+        "name": "Yuki T.",
+        "image": "https://example.com/yuki.jpg"
+      },
+      "reviewee": {
+        "_id": "69b67cb0ad7f3f3c1c779b3d",
+        "name": "Alex Johnson"
+      },
+      "rating": 5,
+      "comment": "Amazing travel buddy with great knowledge of local culture. Highly recommend!",
+      "travelPlan": {
+        "destination": "Tokyo, Japan"
+      },
+      "createdAt": "2026-03-22T10:45:00.000Z"
+    }
+  ]
+}
+```
+
+**Query Parameters for Latest Reviews:**
+
+| Parameter | Type   | Description                    |
+| :-------- | :----- | :----------------------------- |
+| `limit`   | number | Number of reviews (default: 6) |
 
 **Create Review Body:**
 
@@ -355,6 +487,10 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 **Business Rules:**
 
 - Reviews can only be created after the trip status is `completed`
+- Cannot review yourself
+- One review per person per trip
+- Only the reviewer or admin can update/delete their own review
+- Trip status is automatically updated based on dates (upcoming → ongoing → completed)
 - Cannot review yourself
 - One review per person per trip
 - Only the reviewer or admin can update/delete their own review

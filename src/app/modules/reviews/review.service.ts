@@ -58,6 +58,157 @@ export const reviewService = {
     return review;
   },
 
+  // Get user review statistics with user details (public endpoint)
+  async getUserReviewStats(userId: string): Promise<{
+    user: {
+      _id: string;
+      name: string;
+      email: string;
+      image?: string;
+      bio?: string;
+      isVerified: boolean;
+    };
+    totalReviews: number;
+    averageRating: number;
+    ratingBreakdown: {
+      five: number;
+      four: number;
+      three: number;
+      two: number;
+      one: number;
+    };
+  }> {
+    // Get user details
+    const { User } = await import('../user/user.model');
+    const user = await User.findOne({
+      _id: userId,
+      isDeleted: false,
+    }).select('name email image bio isVerified');
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get all reviews for this user
+    const reviews = await Review.find({
+      reviewee: userId,
+      isDeleted: false,
+    });
+
+    // Calculate statistics
+    const totalReviews = reviews.length;
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating =
+      totalReviews > 0
+        ? parseFloat((totalRating / totalReviews).toFixed(1))
+        : 0;
+
+    // Count ratings breakdown
+    const ratingBreakdown = {
+      five: reviews.filter((r) => r.rating === 5).length,
+      four: reviews.filter((r) => r.rating === 4).length,
+      three: reviews.filter((r) => r.rating === 3).length,
+      two: reviews.filter((r) => r.rating === 2).length,
+      one: reviews.filter((r) => r.rating === 1).length,
+    };
+
+    return {
+      user: {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        image: user.image,
+        bio: user.bio,
+        isVerified: user.isVerified,
+      },
+      totalReviews,
+      averageRating,
+      ratingBreakdown,
+    };
+  },
+
+  // Get all users with their review statistics (for listing/mapping)
+  async getAllUsersReviewStats(): Promise<
+    Array<{
+      user: {
+        _id: string;
+        name: string;
+        email: string;
+        image?: string;
+        bio?: string;
+        isVerified: boolean;
+      };
+      totalReviews: number;
+      averageRating: number;
+      ratingBreakdown: {
+        five: number;
+        four: number;
+        three: number;
+        two: number;
+        one: number;
+      };
+    }>
+  > {
+    // Get all users
+    const { User } = await import('../user/user.model');
+    const users = await User.find({ isDeleted: false }).select(
+      'name email image bio isVerified',
+    );
+
+    // Get all reviews grouped by reviewee
+    const reviews = await Review.find({ isDeleted: false });
+
+    // Create a map of reviews by reviewee
+    const reviewsByUser = new Map<string, IReview[]>();
+    reviews.forEach((review) => {
+      const key = review.reviewee.toString();
+      if (!reviewsByUser.has(key)) {
+        reviewsByUser.set(key, []);
+      }
+      reviewsByUser.get(key)!.push(review);
+    });
+
+    // Build result array
+    const result = users
+      .map((user) => {
+        const userReviews = reviewsByUser.get(user._id.toString()) || [];
+        const totalReviews = userReviews.length;
+        const totalRating = userReviews.reduce(
+          (sum, review) => sum + review.rating,
+          0,
+        );
+        const averageRating =
+          totalReviews > 0
+            ? parseFloat((totalRating / totalReviews).toFixed(1))
+            : 0;
+
+        const ratingBreakdown = {
+          five: userReviews.filter((r) => r.rating === 5).length,
+          four: userReviews.filter((r) => r.rating === 4).length,
+          three: userReviews.filter((r) => r.rating === 3).length,
+          two: userReviews.filter((r) => r.rating === 2).length,
+          one: userReviews.filter((r) => r.rating === 1).length,
+        };
+
+        return {
+          user: {
+            _id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            bio: user.bio,
+            isVerified: user.isVerified,
+          },
+          totalReviews,
+          averageRating,
+          ratingBreakdown,
+        };
+      })
+      .sort((a, b) => b.averageRating - a.averageRating); // Sort by rating (highest first)
+
+    return result;
+  },
+
   // Get all reviews for a specific user (for their profile - reviews they received)
   async getUserReviews(
     userId: string,
@@ -189,5 +340,53 @@ export const reviewService = {
     }
 
     await Review.findByIdAndUpdate(reviewId, { isDeleted: true });
+  },
+
+  // Get latest reviews for carousel (community voices)
+  async getLatestReviews(limit: number = 6): Promise<
+    Array<{
+      _id: string;
+      reviewer: {
+        _id: string;
+        name: string;
+        image?: string;
+      };
+      reviewee: {
+        _id: string;
+        name: string;
+      };
+      rating: number;
+      comment: string;
+      travelPlan: {
+        destination: string;
+      };
+      createdAt: Date;
+    }>
+  > {
+    const reviews = await Review.find({ isDeleted: false })
+      .populate('reviewer', 'name image')
+      .populate('reviewee', 'name')
+      .populate('travelPlan', 'destination')
+      .sort({ createdAt: -1 })
+      .limit(limit);
+
+    return reviews.map((review) => ({
+      _id: review._id?.toString() || '',
+      reviewer: {
+        _id: (review.reviewer as any)._id?.toString() || '',
+        name: (review.reviewer as any).name,
+        image: (review.reviewer as any).image,
+      },
+      reviewee: {
+        _id: (review.reviewee as any)._id?.toString() || '',
+        name: (review.reviewee as any).name,
+      },
+      rating: review.rating,
+      comment: review.comment,
+      travelPlan: {
+        destination: (review.travelPlan as any).destination,
+      },
+      createdAt: review.createdAt!,
+    }));
   },
 };
