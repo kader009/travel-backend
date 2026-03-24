@@ -45,7 +45,10 @@ export const travelPlanService = {
 
     const [plans, total] = await Promise.all([
       TravelPlan.find(filter)
-        .populate('user', 'name image isVerified currentLocation')
+        .populate(
+          'user',
+          'name image bio travelInterests isVerified currentLocation',
+        )
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -195,7 +198,7 @@ export const travelPlanService = {
       TravelPlan.find(filter)
         .populate(
           'user',
-          'name image travelInterests isVerified currentLocation',
+          'name image bio travelInterests isVerified currentLocation',
         )
         .sort({ startDate: 1 })
         .skip(skip)
