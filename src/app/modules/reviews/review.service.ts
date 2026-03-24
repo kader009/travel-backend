@@ -58,7 +58,7 @@ export const reviewService = {
     return review;
   },
 
-  // Get all reviews for a specific user
+  // Get all reviews for a specific user (for their profile - reviews they received)
   async getUserReviews(
     userId: string,
   ): Promise<{ reviews: IReview[]; averageRating: number }> {
@@ -78,6 +78,43 @@ export const reviewService = {
         : 0;
 
     return { reviews, averageRating };
+  },
+
+  // Get all reviews given by a user (for dashboard - reviews they created)
+  async getReviewsGivenByUser(
+    userId: string,
+  ): Promise<{ reviews: IReview[]; total: number }> {
+    const reviews = await Review.find({
+      reviewer: userId,
+      isDeleted: false,
+    })
+      .populate('reviewee', 'name image')
+      .populate('travelPlan', 'destination startDate endDate')
+      .sort({ createdAt: -1 });
+
+    return { reviews, total: reviews.length };
+  },
+
+  // Get all reviews received by a user (for dashboard - reviews about them)
+  async getReviewsReceivedByUser(
+    userId: string,
+  ): Promise<{ reviews: IReview[]; averageRating: number; total: number }> {
+    const reviews = await Review.find({
+      reviewee: userId,
+      isDeleted: false,
+    })
+      .populate('reviewer', 'name image')
+      .populate('travelPlan', 'destination startDate endDate')
+      .sort({ createdAt: -1 });
+
+    // Calculate average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating =
+      reviews.length > 0
+        ? parseFloat((totalRating / reviews.length).toFixed(1))
+        : 0;
+
+    return { reviews, averageRating, total: reviews.length };
   },
 
   // Get single review

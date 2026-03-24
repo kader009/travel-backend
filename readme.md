@@ -25,17 +25,17 @@ Travel Buddy & Meetup Platform is a social-travel backend that enables users to 
 
 ## Features
 
-| Category                 | Features                                                                                                                                |
-| :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| **Authentication**       | Register/Login with Email & Password, JWT (Access + Refresh tokens), Social Login (Google, GitHub), Secure HTTP-only cookies            |
-| **User Profiles**        | Full name, Profile image, Bio, Travel interests, Visited countries, Current location, Coordinates (Map), Verified badge |
-| **Travel Plans**         | Create/Read/Update/Delete trips with destination, dates, budget range, travel type, description, itinerary, coordinates, and images  |
-| **Search & Matching**    | Search by destination, date range overlap, and travel type. Interest-based traveler matching                                            |
-| **Join Requests**        | "Request to Join" a travel plan. Plan owner can approve or reject requests                                                              |
-| **Reviews & Ratings**    | Post-trip user-to-user reviews (1-5 stars). Average rating calculation. Edit/Delete own reviews                                         |
-| **Subscription Payment** | Monthly (499 BDT) / Yearly (4999 BDT) plans via SSLCommerz. Verified badge on successful subscription                                   |
-| **Admin Dashboard**      | Manage users, travel plans, payment analytics. Role-based access control                                                                |
-| **Real-time Chat**       | Private 1-to-1 messaging between authenticated users using Socket.io                                                                    |
+| Category                 | Features                                                                                                                            |
+| :----------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| **Authentication**       | Register/Login with Email & Password, JWT (Access + Refresh tokens), Social Login (Google, GitHub), Secure HTTP-only cookies        |
+| **User Profiles**        | Full name, Profile image, Bio, Travel interests, Visited countries, Current location, Coordinates (Map), Verified badge             |
+| **Travel Plans**         | Create/Read/Update/Delete trips with destination, dates, budget range, travel type, description, itinerary, coordinates, and images |
+| **Search & Matching**    | Search by destination, date range overlap, and travel type. Interest-based traveler matching                                        |
+| **Join Requests**        | "Request to Join" a travel plan. Plan owner can approve or reject requests                                                          |
+| **Reviews & Ratings**    | Post-trip user-to-user reviews (1-5 stars). Average rating calculation. Edit/Delete own reviews                                     |
+| **Subscription Payment** | Monthly (499 BDT) / Yearly (4999 BDT) plans via SSLCommerz. Verified badge on successful subscription                               |
+| **Admin Dashboard**      | Manage users, travel plans, payment analytics. Role-based access control                                                            |
+| **Real-time Chat**       | Private 1-to-1 messaging between authenticated users using Socket.io                                                                |
 
 ---
 
@@ -222,10 +222,7 @@ BACKEND_BASE_URL=http://localhost:5000/api/v1
     "lat": 21.4272,
     "lng": 92.0058
   },
-  "images": [
-    "https://example.com/beach1.jpg",
-    "https://example.com/beach2.jpg"
-  ]
+  "images": ["https://example.com/beach1.jpg", "https://example.com/beach2.jpg"]
 }
 ```
 
@@ -280,6 +277,8 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 | :------- | :---------------------- | :--------- | :----------------------------------------------- |
 | `GET`    | `/reviews/user/:userId` | No         | Get all reviews for a user (with average rating) |
 | `GET`    | `/reviews/:id`          | No         | Get single review details                        |
+| `GET`    | `/reviews/given`        | User/Admin | Get all reviews created by me (for dashboard)    |
+| `GET`    | `/reviews/received`     | User/Admin | Get all reviews received by me (for dashboard)   |
 | `POST`   | `/reviews`              | User/Admin | Create a post-trip review                        |
 | `PUT`    | `/reviews/:id`          | User/Admin | Update own review                                |
 | `DELETE` | `/reviews/:id`          | User/Admin | Delete own review (admin can delete any)         |
@@ -295,9 +294,70 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 }
 ```
 
+**Dashboard Reviews Response (GET `/reviews/given`):**
+
+```json
+{
+  "success": true,
+  "message": "Reviews given by you",
+  "total": 2,
+  "data": [
+    {
+      "_id": "665f3c4d5e6f7a8b9c0d1e2f",
+      "reviewee": {
+        "_id": "665f1a2b3c4d5e6f7a8b9c0d",
+        "name": "Jane Smith",
+        "image": "https://example.com/jane.jpg"
+      },
+      "travelPlan": {
+        "_id": "665f2b3c4d5e6f7a8b9c0d1e",
+        "destination": "Cox's Bazar",
+        "startDate": "2026-04-15",
+        "endDate": "2026-04-22"
+      },
+      "rating": 5,
+      "comment": "Amazing travel companion!",
+      "createdAt": "2026-03-23T13:19:26.862Z"
+    }
+  ]
+}
+```
+
+**Dashboard Reviews Response (GET `/reviews/received`):**
+
+```json
+{
+  "success": true,
+  "message": "Reviews received by you",
+  "total": 3,
+  "averageRating": 4.5,
+  "data": [
+    {
+      "_id": "665f3c4d5e6f7a8b9c0d1e2f",
+      "reviewer": {
+        "_id": "665f1a2b3c4d5e6f7a8b9c0d",
+        "name": "John Doe",
+        "image": "https://example.com/john.jpg"
+      },
+      "travelPlan": {
+        "_id": "665f2b3c4d5e6f7a8b9c0d1e",
+        "destination": "Cox's Bazar",
+        "startDate": "2026-04-15"
+      },
+      "rating": 5,
+      "comment": "Best travel buddy ever!",
+      "createdAt": "2026-03-23T13:19:26.862Z"
+    }
+  ]
+}
+```
+
 **Business Rules:**
 
 - Reviews can only be created after the trip status is `completed`
+- Cannot review yourself
+- One review per person per trip
+- Only the reviewer or admin can update/delete their own review
 - Cannot review yourself
 - One review per user per travel plan
 - Response includes `averageRating` across all reviews for that user
@@ -336,10 +396,10 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 
 ### Chat & Messaging (`/chat`)
 
-| Method | Endpoint                     | Auth       | Description                                      |
-| :----- | :--------------------------- | :--------- | :----------------------------------------------- |
-| `GET`  | `/chat/users`                | User/Admin | Get list of users the current user chatted with  |
-| `GET`  | `/chat/messages/:receiverId` | User/Admin | Get message history with a specific user         |
+| Method | Endpoint                     | Auth       | Description                                     |
+| :----- | :--------------------------- | :--------- | :---------------------------------------------- |
+| `GET`  | `/chat/users`                | User/Admin | Get list of users the current user chatted with |
+| `GET`  | `/chat/messages/:receiverId` | User/Admin | Get message history with a specific user        |
 
 **Business Rules:**
 
@@ -370,7 +430,7 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 | `travelInterests`  | String[] | e.g., hiking, food tours, photography |
 | `visitedCountries` | String[] | Countries already visited             |
 | `currentLocation`  | String   | Current city/country                  |
-| `coordinates`     | Object   | `{ lat: number, lng: number }` (Map)  |
+| `coordinates`      | Object   | `{ lat: number, lng: number }` (Map)  |
 | `isVerified`       | Boolean  | Verified badge (via subscription)     |
 | `role`             | Enum     | `user` \| `admin`                     |
 | `status`           | Enum     | `active` \| `inactive` \| `banned`    |
@@ -429,12 +489,12 @@ GET /travel-plans/match?destination=Cox's Bazar&startDate=2026-04-01&endDate=202
 
 ### Message (Chat)
 
-| Field                | Type             | Description                                    |
-| :------------------- | :--------------- | :--------------------------------------------- |
-| `senderId`           | ObjectId -> User | Message sender                                 |
-| `receiverId`         | ObjectId -> User | Message receiver                               |
-| `content`            | String           | Message text body                              |
-| `isRead`             | Boolean          | Read status (Default: `false`)                 |
+| Field        | Type             | Description                    |
+| :----------- | :--------------- | :----------------------------- |
+| `senderId`   | ObjectId -> User | Message sender                 |
+| `receiverId` | ObjectId -> User | Message receiver               |
+| `content`    | String           | Message text body              |
+| `isRead`     | Boolean          | Read status (Default: `false`) |
 
 ---
 
@@ -445,41 +505,41 @@ The platform uses **Socket.io** for real-time 1-to-1 messaging. Connections are 
 ### Frontend Integration Example
 
 ```typescript
-import { io } from "socket.io-client";
+import { io } from 'socket.io-client';
 
 // 1. Initialize Connection with JWT Token
-const socket = io("http://localhost:5000", {
+const socket = io('http://localhost:5000', {
   auth: {
-    token: "your_jwt_access_token_here" // MUST provide access token
-  }
+    token: 'your_jwt_access_token_here', // MUST provide access token
+  },
 });
 
 // 2. Connection Handlers
-socket.on("connect", () => {
-  console.log("Connected securely with Socket ID:", socket.id);
+socket.on('connect', () => {
+  console.log('Connected securely with Socket ID:', socket.id);
 });
 
-socket.on("connect_error", (err) => {
-  console.error("Authentication failed:", err.message);
+socket.on('connect_error', (err) => {
+  console.error('Authentication failed:', err.message);
 });
 
 // 3. Receive Messages (Listener)
-socket.on("receiveMessage", (message) => {
-  console.log("New incoming message:", message);
+socket.on('receiveMessage', (message) => {
+  console.log('New incoming message:', message);
   // message object: { _id, senderId, receiverId, content, createdAt }
 });
 
 // 4. Send a Message
 const sendMessage = (receiverId, content) => {
-  socket.emit("sendMessage", {
-    receiverId: receiverId, 
-    content: content
+  socket.emit('sendMessage', {
+    receiverId: receiverId,
+    content: content,
   });
 };
 
 // 5. Confirmation when your message is saved & sent
-socket.on("messageSent", (message) => {
-  console.log("Message successfully delivered:", message);
+socket.on('messageSent', (message) => {
+  console.log('Message successfully delivered:', message);
 });
 ```
 

@@ -6,20 +6,20 @@ import { ReviewValidation } from './review.validation';
 
 const router = express.Router();
 
-// Public routes
+// Protected routes (User & Admin) - MUST BE BEFORE /:id route
+// Get reviews given and received by logged-in user
 router.get(
-  '/user/:userId',
-  validateRequest(ReviewValidation.getUserReviewsSchema),
-  reviewController.getUserReviews,
+  '/given',
+  authMiddleware(['user', 'admin']),
+  reviewController.getReviewsGivenByUser,
 );
 
 router.get(
-  '/:id',
-  validateRequest(ReviewValidation.getReviewSchema),
-  reviewController.getReviewById,
+  '/received',
+  authMiddleware(['user', 'admin']),
+  reviewController.getReviewsReceivedByUser,
 );
 
-// Protected routes (User & Admin)
 router.post(
   '/',
   authMiddleware(['user', 'admin']),
@@ -39,6 +39,19 @@ router.delete(
   authMiddleware(['user', 'admin']),
   validateRequest(ReviewValidation.getReviewSchema),
   reviewController.deleteReview,
+);
+
+// Public routes - AFTER protected routes
+router.get(
+  '/user/:userId',
+  validateRequest(ReviewValidation.getUserReviewsSchema),
+  reviewController.getUserReviews,
+);
+
+router.get(
+  '/:id',
+  validateRequest(ReviewValidation.getReviewSchema),
+  reviewController.getReviewById,
 );
 
 export const reviewRoutes = router;

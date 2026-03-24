@@ -2,7 +2,11 @@ import { Request, Response, NextFunction } from 'express';
 import { reviewService } from './review.service';
 
 export const reviewController = {
-  async createReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async createReview(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const reviewerId = req.user!.userId;
       const review = await reviewService.createReview(reviewerId, req.body);
@@ -16,7 +20,11 @@ export const reviewController = {
     }
   },
 
-  async getUserReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getUserReviews(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const { userId } = req.params;
       const result = await reviewService.getUserReviews(userId);
@@ -30,7 +38,50 @@ export const reviewController = {
     }
   },
 
-  async getReviewById(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async getReviewsGivenByUser(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const result = await reviewService.getReviewsGivenByUser(userId);
+      res.status(200).json({
+        success: true,
+        message: 'Reviews given by you',
+        data: result.reviews,
+        total: result.total,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getReviewsReceivedByUser(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.user!.userId;
+      const result = await reviewService.getReviewsReceivedByUser(userId);
+      res.status(200).json({
+        success: true,
+        message: 'Reviews received by you',
+        data: result.reviews,
+        averageRating: result.averageRating,
+        total: result.total,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async getReviewById(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const review = await reviewService.getReviewById(req.params.id);
       res.status(200).json({ success: true, data: review });
@@ -39,13 +90,17 @@ export const reviewController = {
     }
   },
 
-  async updateReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateReview(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       const review = await reviewService.updateReview(
         req.params.id,
         userId,
-        req.body
+        req.body,
       );
       res.status(200).json({
         success: true,
@@ -57,7 +112,11 @@ export const reviewController = {
     }
   },
 
-  async deleteReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async deleteReview(
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
     try {
       const userId = req.user!.userId;
       const userRole = req.user!.role;
